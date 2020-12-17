@@ -50,7 +50,10 @@ function Configure () {
         
         // Control globe auto-rotation speed, for example, 2 means two time of normal speed.
         
-        rotationRatio: 1
+        rotationRatio: 1,
+
+        // Control whether tooltips will show in spline line when the mouse hover there
+        lineMsgEnable: true
 
     };
 

@@ -186,6 +186,19 @@ var ObjectUtils = ( function () {
 
     }
 
+    function showSplineMsg ( controller,position,msg ) {
+
+        var geometries = createGeometries( controller );
+
+        var splineOutline = createSplineOutline( geometries.linesGeo );
+        var pSystem = createParticleSystem( geometries.particlesGeo, geometries.movingPoints );
+
+        splineOutline.add( pSystem );
+
+        return splineOutline;
+
+    }
+
     function createGeometries ( controller ) {
 
         var inputData = controller.globalData;
@@ -326,7 +339,7 @@ var ObjectUtils = ( function () {
         }
 
         linesGeo.colors = lineColors;
-
+        linesGeo.name = set.e+':'+set.i+':'+set.v;
         particlesGeo.addAttribute( "position", new THREE.Float32BufferAttribute( positions, 3 ) );
         particlesGeo.addAttribute( "size", new THREE.Float32BufferAttribute( sizes, 1 ) );
         particlesGeo.addAttribute( "customColor", new THREE.Float32BufferAttribute( customColors, 3 ) );
@@ -451,7 +464,9 @@ var ObjectUtils = ( function () {
 
         createHalo: createHalo,
 
-        createSplineSystem: createSplineSystem
+        createSplineSystem: createSplineSystem,
+
+        showSplineMsg: showSplineMsg
 
     }
 
