@@ -17,6 +17,7 @@ import { ObjectUtils } from "./utils/ObjectUtils.js";
 import { HaloHandler } from "./handlers/HaloHandler.js";
 import {DataGroupHandler} from "./handlers/DataGroupHandler";
 import {SingleDataHandler} from "./handlers/SingleDataHandler";
+import { TooltipsHandler } from "./handlers/TooltipsHandler.js";
 
 /**
  * This is the controller object when IO Globe is running,
@@ -49,6 +50,7 @@ function Controller ( container, configureObject ) {
     this.initHandler = new InitHandler( this );
     this.dataHandler = new DataHandler( this );
     this.haloHandler = new HaloHandler( this );
+    this.tooltipsHandler = new TooltipsHandler(this);
     
     // define a data processor to pre-processor the data, will be initialized in InitHandler
 
@@ -69,6 +71,8 @@ function Controller ( container, configureObject ) {
     this.rotating = null;
     this.sphere = null;
     this.earthSurfaceShader = null;
+    this.tooltips = null;
+    this.tooltipsShader = null;
     this.halo = null;
     this.haloShader = null;
 
@@ -503,6 +507,52 @@ function Controller ( container, configureObject ) {
 
             return this;
 
+        },
+
+        addTooltips: function(intersection){
+            controller.overintersection = intersection;
+            if ( intersection !== undefined && intersection !== null ) {
+
+                controller.tooltips = intersection;
+
+            }
+
+            if ( controller.initialized === true ) {
+
+                if ( controller.tooltips !== null ) {
+
+                    controller.tooltipsHandler.update();
+
+                } else {
+
+                    controller.tooltipsHandler.create();
+
+                }
+
+            }
+
+            return this;
+        },
+
+        
+        setTooltips: function(intersection){
+            controller.overintersection = intersection;
+            if ( controller.initialized === true ) {
+
+                controller.tooltipsHandler.update();
+
+            }
+            return this;
+        },
+
+        removeTooltips: function(){
+            controller.overintersection = null;
+            if ( controller.initialized === true ) {
+
+                controller.tooltipsHandler.remove();
+
+            }
+            return this;
         },
 
         setBackgroundColor: function ( color ) {

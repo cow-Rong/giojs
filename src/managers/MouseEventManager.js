@@ -4,6 +4,7 @@
 
 import { CountryColorMap } from "../countryInfo/CountryColorMap.js";
 import { Utils } from "../utils/Utils.js";
+import { TooltipsShader } from "../shaders/TooltipsShader.js";
 
 /**
  * This Manager manage all mouse event for the scene.
@@ -48,7 +49,7 @@ function SceneEventManager() {
 
         var intersects = raycaster.intersectObjects(controller.scene.children, true);
 
-        // intersects.length === 0 means that the mouse click is not on the globe
+        // intersects.length === 0 means that the mouse over is not on the globe
 
         if (intersects.length === 0) {
 
@@ -56,19 +57,23 @@ function SceneEventManager() {
 
         }
 
-        for (var j = 0, len = intersects.length; j < len; j++) {
-            // console.log(intersects[j]);
-            if (controller.configure.control.lineMsgEnable && 
+        controller.overintersection = null;
+        for (let j = 0, len = intersects.length; j < len; j++) {
+            if (controller.configure.control.tooltipsMsgEnable && 
                 intersects[j].object && 
                 intersects[j].object.type === "Line" && 
                 intersects[j].object.geometry && 
                 intersects[j].object.geometry.name !== "") {
-                console.log(intersects[j].object.geometry.name);
-                controller.VisSystemHandler.updateSplineMsg(overMouse,intersects[j].object.geometry.name);
-            }
-        }
 
+                controller.overintersection = intersects[j];
+                controller.switchCountryHandler.executTooltips(controller.overintersection);
+                break;
+            }
+            
+        }
     }
+
+
 
     function onDocumentMouseDown(event) {
 
@@ -262,7 +267,7 @@ function SceneEventManager() {
 
     return {
 
-        bindEvent: bindEvent
+        bindEvent: bindEvent,
 
     }
 

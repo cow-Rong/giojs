@@ -5,11 +5,12 @@
 
 import { HaloShader } from "../shaders/HaloShader.js";
 import { EarthSurfaceShader } from "../shaders/EarthSurfaceShader.js";
+import { TooltipsShader } from "../shaders/TooltipsShader.js";
 import { Utils } from "../utils/Utils.js";
 import { MovingSpriteShader } from "../shaders/MovingSpriteShader.js";
 import { CountryData } from "../countryInfo/CountryData.js";
 import { CountryColorMap } from "../countryInfo/CountryColorMap.js";
-import {Continent} from "../countryInfo/Continent";
+import { Continent } from "../countryInfo/Continent";
 
 /**
  * This utils create objects in for the scene
@@ -93,7 +94,7 @@ var ObjectUtils = ( function () {
         renderer.autoClear = false;
         renderer.sortObjects = false;
         renderer.generateMipmaps = false;
-        
+
         return renderer;
 
     }
@@ -168,6 +169,18 @@ var ObjectUtils = ( function () {
 
     }
 
+    function createTooltips ( controller ) {
+
+        var tooltipsShader = new TooltipsShader( controller );
+        var spriteMaterial = new THREE.SpriteMaterial( { map: tooltipsShader.tooltipsTexture } );
+        var sprite = new THREE.Sprite( spriteMaterial );
+        sprite.scale.set( 1.2, 1.2, 1.2 );
+        sprite.name = "tooltips";
+        sprite.tooltipsShader = tooltipsShader;
+
+        return sprite
+    }
+
     /**
      * The SplineSystem contains the mesh of spine lines and the moving object on the globe.
      * The mesh will be created each time the clicked country changes.
@@ -186,16 +199,26 @@ var ObjectUtils = ( function () {
 
     }
 
-    function showSplineMsg ( controller,position,msg ) {
+    function createSplineTooltips ( controller ) {
 
-        var geometries = createGeometries( controller );
+        if ( controller.overintersection !== null ) {
 
-        var splineOutline = createSplineOutline( geometries.linesGeo );
-        var pSystem = createParticleSystem( geometries.particlesGeo, geometries.movingPoints );
+            var tooltipsGeometries = createTooltipsGeometries( controller );
 
-        splineOutline.add( pSystem );
+            return tooltipsGeometries;
 
-        return splineOutline;
+        }
+
+        return null
+    }
+
+    function createTooltipsGeometries ( controller ) {
+
+        const spriteMaterial = new THREE.SpriteMaterial( { map: controller.tooltipsShader.tooltipsTexture } );
+        const sprite1 = new THREE.Sprite( spriteMaterial );
+        sprite1.tooltipsShader = controller.tooltipsShader;
+
+        return sprite1;
 
     }
 
@@ -216,7 +239,7 @@ var ObjectUtils = ( function () {
         var sizes = [];
         var customColors = [];
 
-        for (var i in inputData) {
+        for ( var i in inputData ) {
 
             var set = inputData[ i ];
 
@@ -244,7 +267,7 @@ var ObjectUtils = ( function () {
 
                             if ( CountryData[ countryCode ] !== undefined ) {
 
-								controller.relatedCountries.push(CountryData[continentCountries[j]]);
+                                controller.relatedCountries.push( CountryData[ continentCountries[ j ] ] );
 
                             }
 
@@ -252,19 +275,19 @@ var ObjectUtils = ( function () {
 
                     } else {
 
-						controller.relatedCountries.push( CountryData[ set.i ] );
+                        controller.relatedCountries.push( CountryData[ set.i ] );
 
                     }
 
-					if ( set.outColor === undefined ) {
+                    if ( set.outColor === undefined ) {
 
-						lineColor = new THREE.Color( controller.configure.color.out );
+                        lineColor = new THREE.Color( controller.configure.color.out );
 
-					} else {
+                    } else {
 
-						lineColor = new THREE.Color( set.outColor );
+                        lineColor = new THREE.Color( set.outColor );
 
-					}
+                    }
 
                 } else {
 
@@ -339,7 +362,7 @@ var ObjectUtils = ( function () {
         }
 
         linesGeo.colors = lineColors;
-        linesGeo.name = set.e+':'+set.i+':'+set.v;
+        linesGeo.name = set.e + ':' + set.i + ':' + set.v;
         particlesGeo.addAttribute( "position", new THREE.Float32BufferAttribute( positions, 3 ) );
         particlesGeo.addAttribute( "size", new THREE.Float32BufferAttribute( sizes, 1 ) );
         particlesGeo.addAttribute( "customColor", new THREE.Float32BufferAttribute( customColors, 3 ) );
@@ -410,13 +433,13 @@ var ObjectUtils = ( function () {
 
                 particle.lerpN += 0.05;
 
-                if (particle.lerpN > 1) {
+                if ( particle.lerpN > 1 ) {
 
                     particle.lerpN = 0;
                     particle.moveIndex = particle.nextIndex;
                     particle.nextIndex++;
 
-                    if (particle.nextIndex >= path.length) {
+                    if ( particle.nextIndex >= path.length ) {
 
                         particle.moveIndex = 0;
                         particle.nextIndex = 1;
@@ -466,7 +489,9 @@ var ObjectUtils = ( function () {
 
         createSplineSystem: createSplineSystem,
 
-        showSplineMsg: showSplineMsg
+        createTooltips: createTooltips,
+
+        createSplineTooltips: createSplineTooltips,
 
     }
 

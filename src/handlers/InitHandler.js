@@ -66,10 +66,14 @@ function InitHandler ( controller ) {
 
         }
 
+        if ( controller.configure.control.tooltipsMsgEnable ) {
+
+            controller.tooltipsHandler.update();
+
+        }
+
         controller.rotationHandler.update();
 
-        controller.renderer.clear();
-        controller.renderer.render( controller.scene, controller.camera );
 
         // update the moving sprite on the spline
 
@@ -88,6 +92,9 @@ function InitHandler ( controller ) {
         );
 
         requestAnimationFrame( animate );
+       
+        controller.renderer.clear();
+        controller.renderer.render( controller.scene, controller.camera );
 
     }
 
@@ -105,8 +112,11 @@ function InitHandler ( controller ) {
         controller.halo = ObjectUtils.createHalo( controller );
         controller.haloShader = controller.halo.haloShader;
         controller.earthSurfaceShader = controller.sphere.earthSurfaceShader;
+        controller.tooltips = ObjectUtils.createTooltips( controller );
+        controller.tooltipsShader = controller.tooltips.tooltipsShader;
 
         controller.scene = ObjectUtils.createScene( controller );
+
         controller.rotating = new THREE.Object3D();
 
         // the stats object will only be created when "isStatsEnabled" in the configure is set to be true
@@ -138,6 +148,12 @@ function InitHandler ( controller ) {
 
         }
 
+        if(controller.configure.control.tooltipsMsgEnable === true){
+
+            controller.scene.add( controller.tooltips);
+
+        }
+
     }
 
     // pre-process the data
@@ -160,10 +176,12 @@ function InitHandler ( controller ) {
         // defined the initial country
 
         controller.selectedCountry = CountryData[ controller.configure.control.initCountry ];
+        controller.overintersection = null;
 
         // create the visSystem based on the previous creation and settings
 
         controller.visSystemHandler.update();
+        controller.tooltipsHandler.update();
 
         // rotate to the init country and highlight the init country
 

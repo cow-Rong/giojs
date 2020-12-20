@@ -1708,6 +1708,40 @@ function EarthSurfaceShader ( controller ) {
  */
 
 /**
+ * shader material's parameter for splin tooltips
+ */
+
+function TooltipsShader ( controller ) {
+
+    var tooltipsCanvas, tooltipsTexture;
+    var temp = createTooltipsParams();
+
+    function createTooltipsParams () {
+
+        tooltipsCanvas = document.createElement( 'canvas' );
+        tooltipsCanvas.width = 128;
+        tooltipsCanvas.height = 64;
+
+        tooltipsTexture = new THREE.Texture( tooltipsCanvas );
+        tooltipsTexture.needsUpdate = true;
+
+        return null;
+    }
+
+    return {
+
+        tooltipsCanvas: tooltipsCanvas,
+
+        tooltipsTexture: tooltipsTexture,
+
+    }
+}
+
+/**
+ * @author syt123450 / https://github.com/syt123450
+ */
+
+/**
  * This is the image in "/assets/images/particle.png", encoded in based64
  */
 
@@ -2219,7 +2253,7 @@ var ObjectUtils = ( function () {
         renderer.autoClear = false;
         renderer.sortObjects = false;
         renderer.generateMipmaps = false;
-        
+
         return renderer;
 
     }
@@ -2294,6 +2328,18 @@ var ObjectUtils = ( function () {
 
     }
 
+    function createTooltips ( controller ) {
+
+        var tooltipsShader = new TooltipsShader( controller );
+        var spriteMaterial = new THREE.SpriteMaterial( { map: tooltipsShader.tooltipsTexture } );
+        var sprite = new THREE.Sprite( spriteMaterial );
+        sprite.scale.set( 1.2, 1.2, 1.2 );
+        sprite.name = "tooltips";
+        sprite.tooltipsShader = tooltipsShader;
+
+        return sprite
+    }
+
     /**
      * The SplineSystem contains the mesh of spine lines and the moving object on the globe.
      * The mesh will be created each time the clicked country changes.
@@ -2309,6 +2355,29 @@ var ObjectUtils = ( function () {
         splineOutline.add( pSystem );
 
         return splineOutline;
+
+    }
+
+    function createSplineTooltips ( controller ) {
+
+        if ( controller.overintersection !== null ) {
+
+            var tooltipsGeometries = createTooltipsGeometries( controller );
+
+            return tooltipsGeometries;
+
+        }
+
+        return null
+    }
+
+    function createTooltipsGeometries ( controller ) {
+
+        const spriteMaterial = new THREE.SpriteMaterial( { map: controller.tooltipsShader.tooltipsTexture } );
+        const sprite1 = new THREE.Sprite( spriteMaterial );
+        sprite1.tooltipsShader = controller.tooltipsShader;
+
+        return sprite1;
 
     }
 
@@ -2329,7 +2398,7 @@ var ObjectUtils = ( function () {
         var sizes = [];
         var customColors = [];
 
-        for (var i in inputData) {
+        for ( var i in inputData ) {
 
             var set = inputData[ i ];
 
@@ -2357,7 +2426,7 @@ var ObjectUtils = ( function () {
 
                             if ( CountryData[ countryCode ] !== undefined ) {
 
-								controller.relatedCountries.push(CountryData[continentCountries[j]]);
+                                controller.relatedCountries.push( CountryData[ continentCountries[ j ] ] );
 
                             }
 
@@ -2365,19 +2434,19 @@ var ObjectUtils = ( function () {
 
                     } else {
 
-						controller.relatedCountries.push( CountryData[ set.i ] );
+                        controller.relatedCountries.push( CountryData[ set.i ] );
 
                     }
 
-					if ( set.outColor === undefined ) {
+                    if ( set.outColor === undefined ) {
 
-						lineColor = new THREE.Color( controller.configure.color.out );
+                        lineColor = new THREE.Color( controller.configure.color.out );
 
-					} else {
+                    } else {
 
-						lineColor = new THREE.Color( set.outColor );
+                        lineColor = new THREE.Color( set.outColor );
 
-					}
+                    }
 
                 } else {
 
@@ -2452,7 +2521,7 @@ var ObjectUtils = ( function () {
         }
 
         linesGeo.colors = lineColors;
-        linesGeo.name = set.e+':'+set.i+':'+set.v;
+        linesGeo.name = set.e + ':' + set.i + ':' + set.v;
         particlesGeo.addAttribute( "position", new THREE.Float32BufferAttribute( positions, 3 ) );
         particlesGeo.addAttribute( "size", new THREE.Float32BufferAttribute( sizes, 1 ) );
         particlesGeo.addAttribute( "customColor", new THREE.Float32BufferAttribute( customColors, 3 ) );
@@ -2523,13 +2592,13 @@ var ObjectUtils = ( function () {
 
                 particle.lerpN += 0.05;
 
-                if (particle.lerpN > 1) {
+                if ( particle.lerpN > 1 ) {
 
                     particle.lerpN = 0;
                     particle.moveIndex = particle.nextIndex;
                     particle.nextIndex++;
 
-                    if (particle.nextIndex >= path.length) {
+                    if ( particle.nextIndex >= path.length ) {
 
                         particle.moveIndex = 0;
                         particle.nextIndex = 1;
@@ -2577,7 +2646,11 @@ var ObjectUtils = ( function () {
 
         createHalo: createHalo,
 
-        createSplineSystem: createSplineSystem
+        createSplineSystem: createSplineSystem,
+
+        createTooltips: createTooltips,
+
+        createSplineTooltips: createSplineTooltips,
 
     }
 
@@ -2613,7 +2686,7 @@ function VisSystemHandler ( controller ) {
 
     return {
 
-        update: update
+        update: update,
 
     }
 
@@ -2638,6 +2711,13 @@ function SwitchCountryHandler ( controller ) {
 
     }
 
+    function executTooltips(intersection){
+
+        controller.overintersection = intersection;
+        controller.tooltipsHandler.update();
+        
+    }
+
     function executeSwitch ( pickColorIndex ) {
 
         // first change the selectedCountry
@@ -2657,6 +2737,7 @@ function SwitchCountryHandler ( controller ) {
         controller.rotationHandler.rotateToTargetCountry();
 
     }
+
 
     function executeCallback () {
 
@@ -2727,6 +2808,7 @@ function SwitchCountryHandler ( controller ) {
     return {
 
         executeSwitch: execute,
+        executTooltips:executTooltips,
 
         switchFromAPI: switchFromAPI,
 
@@ -2805,14 +2887,6 @@ function SceneEventManager() {
 
         }
 
-        //	if the click is drag, do nothing
-
-        // if (Math.abs(pressX - mouseX) > 3 || Math.abs(pressY - mouseY) > 3) {
-
-        //     return;
-
-        // }
-
         // let the mouse and raycaster to judge whether the click is on the earth, if not do noting
         let overMouse = new THREE.Vector2();
         overMouse.x = ((event.clientX - Utils.getElementViewLeft(controller.container)) / controller.container.clientWidth) * 2 - 1;
@@ -2822,7 +2896,7 @@ function SceneEventManager() {
 
         var intersects = raycaster.intersectObjects(controller.scene.children, true);
 
-        // intersects.length === 0 means that the mouse click is not on the globe
+        // intersects.length === 0 means that the mouse over is not on the globe
 
         if (intersects.length === 0) {
 
@@ -2830,14 +2904,23 @@ function SceneEventManager() {
 
         }
 
-        for (var j = 0, len = intersects.length; j < len; j++) {
-            // console.log(intersects[j]);
-            if (intersects[j].object && intersects[j].object.type === "Line" && intersects[j].object.geometry && intersects[j].object.geometry.name !== ""){
-                console.log(intersects[j].object.geometry.name);
-            }
-        }
+        controller.overintersection = null;
+        for (let j = 0, len = intersects.length; j < len; j++) {
+            if (controller.configure.control.tooltipsMsgEnable && 
+                intersects[j].object && 
+                intersects[j].object.type === "Line" && 
+                intersects[j].object.geometry && 
+                intersects[j].object.geometry.name !== "") {
 
+                controller.overintersection = intersects[j];
+                controller.switchCountryHandler.executTooltips(controller.overintersection);
+                break;
+            }
+            
+        }
     }
+
+
 
     function onDocumentMouseDown(event) {
 
@@ -3031,7 +3114,7 @@ function SceneEventManager() {
 
     return {
 
-        bindEvent: bindEvent
+        bindEvent: bindEvent,
 
     }
 
@@ -3347,10 +3430,14 @@ function InitHandler ( controller ) {
 
         }
 
+        if ( controller.configure.control.tooltipsMsgEnable ) {
+
+            controller.tooltipsHandler.update();
+
+        }
+
         controller.rotationHandler.update();
 
-        controller.renderer.clear();
-        controller.renderer.render( controller.scene, controller.camera );
 
         // update the moving sprite on the spline
 
@@ -3369,6 +3456,9 @@ function InitHandler ( controller ) {
         );
 
         requestAnimationFrame( animate );
+       
+        controller.renderer.clear();
+        controller.renderer.render( controller.scene, controller.camera );
 
     }
 
@@ -3386,8 +3476,11 @@ function InitHandler ( controller ) {
         controller.halo = ObjectUtils.createHalo( controller );
         controller.haloShader = controller.halo.haloShader;
         controller.earthSurfaceShader = controller.sphere.earthSurfaceShader;
+        controller.tooltips = ObjectUtils.createTooltips( controller );
+        controller.tooltipsShader = controller.tooltips.tooltipsShader;
 
         controller.scene = ObjectUtils.createScene( controller );
+
         controller.rotating = new THREE.Object3D();
 
         // the stats object will only be created when "isStatsEnabled" in the configure is set to be true
@@ -3419,6 +3512,12 @@ function InitHandler ( controller ) {
 
         }
 
+        if(controller.configure.control.tooltipsMsgEnable === true){
+
+            controller.scene.add( controller.tooltips);
+
+        }
+
     }
 
     // pre-process the data
@@ -3441,10 +3540,12 @@ function InitHandler ( controller ) {
         // defined the initial country
 
         controller.selectedCountry = CountryData[ controller.configure.control.initCountry ];
+        controller.overintersection = null;
 
         // create the visSystem based on the previous creation and settings
 
         controller.visSystemHandler.update();
+        controller.tooltipsHandler.update();
 
         // rotate to the init country and highlight the init country
 
@@ -3512,7 +3613,10 @@ function Configure () {
         
         // Control globe auto-rotation speed, for example, 2 means two time of normal speed.
         
-        rotationRatio: 1
+        rotationRatio: 1,
+
+        // Control whether tooltips will show in spline line when the mouse hover there
+        tooltipsMsgEnable: true
 
     };
 
@@ -4516,6 +4620,87 @@ function SingleDataHandler(controller) {
  */
 
 /**
+ * This handlers handle all task related to the spline tooltips.
+ */
+
+function TooltipsHandler ( controller ) {
+
+    function create () {
+
+        controller.tooltips = ObjectUtils.createTooltips( controller );
+        controller.tooltipsShader = controller.tooltips.tooltipsShader;
+        controller.scene.add( controller.tooltips );
+
+    }
+
+    function remove () {
+
+        controller.scene.remove( controller.tooltips );
+        controller.tooltips =  null;
+
+    }
+
+    function showTooltips ( msg ) {
+
+        var ctx = controller.tooltipsShader.tooltipsCanvas.getContext( '2d' );
+
+        const msg1 = '北京->上海';
+        const msg2 = '攻击次数：45';
+
+        const metrics1 = ctx.measureText('北京->上海');
+        const metrics2 = ctx.measureText('攻击次数：45');
+        const width = metrics1.width > metrics2.width ? metrics1.width : metrics2.width;
+        const height = width/(msg1.length>msg2.length?msg1.length:msg2.length) * 0.9;
+
+        ctx.fillStyle = "rgba(255,255,255,0.95)"; // black border
+        ctx.fillRect(0, 0, width, 2*height);
+        ctx.fillStyle = "rgba(255,255,255,0.65)"; // white filler
+        ctx.fillRect(0, 0, width, 2*height);
+        ctx.fillStyle = "rgba(0,0,0,1)"; // text color
+        ctx.fillText('北京->上海', 0, height);
+        ctx.fillText('攻击次数：45', 0, 2*height);
+
+        controller.tooltips.position.copy(controller.overintersection.point);
+        controller.tooltips.scale.set(60, 60, 1);
+
+        controller.tooltipsShader.tooltipsTexture.needsUpdate = true;
+
+    }
+
+    function update () {
+
+        controller.scene.remove(controller.tooltips);
+        controller.tooltips = ObjectUtils.createSplineTooltips( controller );
+
+        if(controller.tooltips!==null){
+
+            controller.tooltipsShader = controller.tooltips.tooltipsShader;
+            showTooltips( controller.overintersection.object.geometry.name );
+            controller.scene.add( controller.tooltips );
+
+        }
+
+    }
+
+    return {
+        
+        create: create,
+
+        remove: remove,
+
+        update: update,
+
+        showTooltips: showTooltips,
+
+    }
+
+}
+
+/**
+ * @author syt123450 / https://github.com/syt123450
+ */
+
+/**
  * This is the controller object when IO Globe is running,
  * When developer want to create a new IO globe, they first need to create a controller instance and then init this controller.
  * How to create and use this controller is introduce in API document and shown in demos.
@@ -4546,6 +4731,7 @@ function Controller ( container, configureObject ) {
     this.initHandler = new InitHandler( this );
     this.dataHandler = new DataHandler( this );
     this.haloHandler = new HaloHandler( this );
+    this.tooltipsHandler = new TooltipsHandler(this);
     
     // define a data processor to pre-processor the data, will be initialized in InitHandler
 
@@ -4566,6 +4752,8 @@ function Controller ( container, configureObject ) {
     this.rotating = null;
     this.sphere = null;
     this.earthSurfaceShader = null;
+    this.tooltips = null;
+    this.tooltipsShader = null;
     this.halo = null;
     this.haloShader = null;
 
@@ -5000,6 +5188,52 @@ function Controller ( container, configureObject ) {
 
             return this;
 
+        },
+
+        addTooltips: function(intersection){
+            controller.overintersection = intersection;
+            if ( intersection !== undefined && intersection !== null ) {
+
+                controller.tooltips = intersection;
+
+            }
+
+            if ( controller.initialized === true ) {
+
+                if ( controller.tooltips !== null ) {
+
+                    controller.tooltipsHandler.update();
+
+                } else {
+
+                    controller.tooltipsHandler.create();
+
+                }
+
+            }
+
+            return this;
+        },
+
+        
+        setTooltips: function(intersection){
+            controller.overintersection = intersection;
+            if ( controller.initialized === true ) {
+
+                controller.tooltipsHandler.update();
+
+            }
+            return this;
+        },
+
+        removeTooltips: function(){
+            controller.overintersection = null;
+            if ( controller.initialized === true ) {
+
+                controller.tooltipsHandler.remove();
+
+            }
+            return this;
         },
 
         setBackgroundColor: function ( color ) {

@@ -53,7 +53,7 @@ function Configure () {
         rotationRatio: 1,
 
         // Control whether tooltips will show in spline line when the mouse hover there
-        lineMsgEnable: true
+        tooltipsMsgEnable: true
 
     };
 

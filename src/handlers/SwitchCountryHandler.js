@@ -21,6 +21,13 @@ function SwitchCountryHandler ( controller ) {
 
     }
 
+    function executTooltips(intersection){
+
+        controller.overintersection = intersection;
+        controller.tooltipsHandler.update();
+        
+    }
+
     function executeSwitch ( pickColorIndex ) {
 
         // first change the selectedCountry
@@ -40,6 +47,7 @@ function SwitchCountryHandler ( controller ) {
         controller.rotationHandler.rotateToTargetCountry();
 
     }
+
 
     function executeCallback () {
 
@@ -110,6 +118,7 @@ function SwitchCountryHandler ( controller ) {
     return {
 
         executeSwitch: execute,
+        executTooltips:executTooltips,
 
         switchFromAPI: switchFromAPI,
 

@@ -28,26 +28,9 @@ function VisSystemHandler ( controller ) {
 
     }
 
-    function updateSplineMsg(position,msg){
-        // first remove the old object from rotating ( contains splines and moving sprites )
-
-        // controller.rotating.remove( controller.visualizationMesh );
-
-        // create a new visualization mesh
-
-        // controller.visualizationMesh = new THREE.Object3D();
-        var msgTooltips = ObjectUtils.showSplineMsg( controller,position,msg );
-        controller.visualizationMesh.add( msgTooltips );
-
-        // add the new visualization mesh to rotating
-
-        // controller.rotating.add( controller.visualizationMesh );
-    }
-
     return {
 
         update: update,
-        updateSplineMsg: updateSplineMsg
 
     }
 
